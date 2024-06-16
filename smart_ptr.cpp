@@ -1,5 +1,5 @@
 
-
+// namespace containing all my smart pointer implementations
 namespace dimi
 {
 
@@ -10,17 +10,20 @@ class auto_ptr
 private:
   T* ptr; // Actual pointer
 
-  explicit auto_ptr(T* given_ptr = nullptr): ptr(given_ptr) {};
+  explicit auto_ptr(T* given_ptr = nullptr) noexcept 
+    : ptr(given_ptr) {};
 
-  ~auto_ptr() { delete (ptr); }
+  ~auto_ptr() noexcept { delete (ptr); }
 
-  T& operator*() {return *ptr; }
+  T& operator*() const noexcept {return *ptr; }
 
-  T* operator->() { return ptr; }
+  T* operator->() const noexcept { return ptr; }
 
-  T* operator+(int num) { return ptr + num; }
+  T* operator+(int num) noexcept { return ptr + num; }
 
-  void operator++() { ptr = ptr + 1; }
+  T* operator-(int num) noexcept { return ptr - num; }
+
+  void operator++() noexcept { ptr = ptr + 1; }
 };
 
 }
