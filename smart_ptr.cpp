@@ -1,42 +1,67 @@
-
 // namespace containing all my smart pointer implementations
+#include <cstdio>
 namespace dm
 {
 
-// Smart pointer that deletes itself when going out of scope
-template<typename T>
-class auto_ptr 
+template <typename T>
+class unique_ptr 
 {
 private:
   T* ptr; // Actual pointer
 
 public:
-
-  explicit auto_ptr(T* given_ptr = nullptr) noexcept 
+  explicit unique_ptr(T* given_ptr = nullptr) noexcept
     : ptr(given_ptr) {};
 
-  ~auto_ptr() noexcept { delete ptr; }
+  ~unique_ptr() noexcept { delete ptr; }
 
   // OPERATOR OVERLOADS
   T& operator*() const noexcept {return *ptr; } // access to the managed object
 
   T& operator->() const noexcept { return *ptr; } // access to the manged object
 
-  auto_ptr& operator=(auto_ptr<T>& r) noexcept { ptr = r.get(); } // transfer ownership from another auto_ptr
-
-  // METHODS
-  // Returns a pointer to the managed object
-  T* get() const noexcept { return ptr; }
-
-  // Replaces the held pointer with a new object
-  void reset(T* new_object = 0) noexcept 
+  // transfer ownership to another auto_ptr
+  unique_ptr& operator=(unique_ptr<T>& r) noexcept 
   {
     delete ptr;
-    ptr = new_object;
+    ptr = r.get(); 
   }
 
-  // Releases the held pointer
-  void release() noexcept { delete ptr; }
-};
+  // transfer ownership to another auto_ptr
+  unique_ptr& operator=(const unique_ptr<T>& r) noexcept 
+  {
+    delete ptr;
+    ptr = r.get(); 
+  }
 
+  // Checks whether *this owns an object
+  explicit operator bool() const noexcept { return ptr != nullptr; }
+
+  // Indexed access to the managed array
+  T operator[](int num) { return ptr[num]; }
+  
+  // METHODS
+  // Retruns pointer to the managed object or nullptr
+  T* get() const { return ptr; }
+
+  // Releases the ownership of the managed object
+  void release() { delete ptr; }
+
+  // Replaces the managed object
+  void reset(T* new_ptr) noexcept 
+  {
+    auto old_ptr = ptr;
+    ptr = new_ptr;
+    delete old_ptr;
+
+    if (old_ptr) printf("todo"); //TODO delete the previously managed object
+  }
+
+  void swap(unique_ptr& other) noexcept
+  {
+    auto tmp = this;
+    this = other;
+    other = tmp;
+  }
+};
 }
