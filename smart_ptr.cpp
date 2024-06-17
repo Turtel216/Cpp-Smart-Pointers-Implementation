@@ -7,18 +7,26 @@ template <typename T>
 class unique_ptr 
 {
 private:
-  T* ptr; // Actual pointer
+  T* ptr = nullptr; // Actual pointer
 
 public:
-  explicit unique_ptr(T* given_ptr = nullptr) noexcept
-    : ptr(given_ptr) {};
 
-  ~unique_ptr() noexcept { delete ptr; }
+  explicit unique_ptr(T* given_ptr = nullptr) noexcept
+    : ptr(given_ptr) {}
+
+  explicit unique_ptr() noexcept
+    : ptr(nullptr){}
+
+  unique_ptr(const unique_ptr&& other) = delete; // Deletes the move constrator
+
+  unique_ptr(unique_ptr&& right) : ptr(right.release()) {} // Move constrator
+  
+  ~unique_ptr() noexcept { reset(); }
 
   // OPERATOR OVERLOADS
-  T& operator*() const noexcept {return *ptr; } // access to the managed object
+  T& operator*() const noexcept {return get(); } // access to the managed object
 
-  T& operator->() const noexcept { return *ptr; } // access to the manged object
+  T* operator->() const noexcept { return get(); } // access to the manged object
 
   // transfer ownership to another auto_ptr
   unique_ptr& operator=(unique_ptr<T>& r) noexcept 
@@ -27,15 +35,15 @@ public:
     ptr = r.get(); 
   }
 
-  // transfer ownership to another auto_ptr
-  unique_ptr& operator=(const unique_ptr<T>& r) noexcept 
+  // Transfer ownership
+  unique_ptr& operator=(unique_ptr&& right)
   {
-    delete ptr;
-    ptr = r.get(); 
+    reset(right.release());
+    return *this;
   }
 
   // Checks whether *this owns an object
-  explicit operator bool() const noexcept { return ptr != nullptr; }
+  explicit operator bool() const noexcept { return get() != nullptr; }
 
   // Indexed access to the managed array
   T operator[](int num) { return ptr[num]; }
@@ -45,23 +53,29 @@ public:
   T* get() const { return ptr; }
 
   // Releases the ownership of the managed object
-  void release() { delete ptr; }
-
-  // Replaces the managed object
-  void reset(T* new_ptr) noexcept 
+  T* release() 
   {
     auto old_ptr = ptr;
-    ptr = new_ptr;
-    delete old_ptr;
+    ptr = nullptr;
+    return old_ptr;
+  }
 
-    if (old_ptr) printf("todo"); //TODO delete the previously managed object
+  // Replaces the managed object
+  void reset(T* new_ptr = nullptr) noexcept 
+  {
+    auto old_ptr = release();
+    ptr = new_ptr;
+    if (old_ptr != nullptr)
+    {
+      delete old_ptr;
+    }
   }
 
   void swap(unique_ptr& other) noexcept
   {
-    auto tmp = this;
-    this = other;
-    other = tmp;
+    auto tmp = this->ptr;
+    this = other.ptr;
+    other.ptr = tmp->ptr;
   }
 };
 }
